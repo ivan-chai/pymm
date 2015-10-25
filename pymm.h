@@ -2,10 +2,10 @@
 
 #include <exception>
 
-class TFFmpepException {
+class TFFmpegException {
   const char *Msg;
 public:
-  TFFmpepException(const char *msg) {Msg = msg;}
+  TFFmpegException(const char *msg) {Msg = msg;}
   const char *GetMessage() {return Msg;}
 };
 

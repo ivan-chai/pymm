@@ -22,6 +22,15 @@ struct TFFmpegStreamInfo {
   int Height;
 };
 
+%exception {
+  try {
+    $action
+  } catch (TFFmpegException &e) {
+      PyErr_SetString(PyExc_RuntimeError, e.GetMessage());
+      return NULL;
+  }
+}
+
 // char** data
 %typemap(in, numinputs=0) char **data (char *tmpptr) {
   $1 = &tmpptr;

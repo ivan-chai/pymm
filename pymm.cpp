@@ -67,23 +67,26 @@ private:
 		InitVideo();
 	    Frame = av_frame_alloc();
 	    if(Frame == NULL)
-		throw TFFmpepException("Couldn't allocate frame");
+		throw TFFmpegException("Couldn't allocate frame");
 	    FrameSize = 0;
 	    FrameOffs = 0;
 	}
 	void InitAudio() {
 	    switch (CodecCtx->sample_fmt) {
 	    case AV_SAMPLE_FMT_U8:
+	    case AV_SAMPLE_FMT_U8P:
 		SampleSize = 1;
 		break;
 	    case AV_SAMPLE_FMT_S16:
+	    case AV_SAMPLE_FMT_S16P:
 		SampleSize = 2;
 		break;
 	    case AV_SAMPLE_FMT_S32:
+	    case AV_SAMPLE_FMT_S32P:
 		SampleSize = 4;
 		break;
 	    default:
-		throw TFFmpepException("Could not detect sample size");
+		throw TFFmpegException("Could not detect sample size");
 	    }
 	}
 	void InitVideo() {
@@ -91,7 +94,7 @@ private:
 	    int HelperBufSize = avpicture_get_size(PIX_FMT_RGB24, CodecCtx->width, CodecCtx->height);
 	    HelperFrame = av_frame_alloc();
 	    if(HelperFrame == NULL)
-		throw TFFmpepException("Couldn't allocate frame");
+		throw TFFmpegException("Couldn't allocate frame");
 	    HelperVideoBuf = new uint8_t[HelperBufSize];
 	    avpicture_fill((AVPicture *)HelperFrame, HelperVideoBuf,
 			   PIX_FMT_RGB24,
@@ -115,7 +118,7 @@ private:
 	    else if(Type == EFF_VIDEO_STREAM)
 		DecodeMethod = &avcodec_decode_video2;
 	    if(Type == EFF_UNK_STREAM)
-		throw TFFmpepException("Wrong stream type");
+		throw TFFmpegException("Wrong stream type");
 
 	    int ToReadOrig = toRead;
 	    int ToCopy;
@@ -144,7 +147,7 @@ private:
 		    do {
 			BytesN = DecodeMethod(CodecCtx, Frame, &GotFrame, Packet);
 			if(BytesN < 0)
-			    throw TFFmpepException("Decoding error");
+			    throw TFFmpegException("Decoding error");
 			Packet->data += BytesN;
 			Packet->size -= BytesN;
 		    } while(GotFrame == 0 && Packet->size > 0);
@@ -180,12 +183,13 @@ public:
     TFFmpegReaderImp(const char* fname) {
 	FormatCtx = NULL;
 	Packet = NULL;
-
+	
+	av_log_set_level(AV_LOG_QUIET);
 	av_register_all();
 	if(avformat_open_input(&FormatCtx, fname, NULL, NULL) != 0)
-	    throw TFFmpepException("Couldn't open file");
+	    throw TFFmpegException("Couldn't open file");
 	if(avformat_find_stream_info(FormatCtx, NULL) < 0)
-	    throw TFFmpepException("Stream info not found");
+	    throw TFFmpegException("Stream info not found");
 
 	// Init streams
 	Streams.resize(FormatCtx->nb_streams);
@@ -202,12 +206,12 @@ public:
 	    }
 	    AVCodec *Codec = avcodec_find_decoder(CodecCtxTmp->codec_id);
 	    if(Codec == NULL)
-		throw TFFmpepException("Codec not found");
+		throw TFFmpegException("Codec not found");
 	    Stream.CodecCtx = avcodec_alloc_context3(Codec);
 	    if(avcodec_copy_context(Stream.CodecCtx, CodecCtxTmp) != 0) 
-		throw TFFmpepException("Couldn't copy codec context");
+		throw TFFmpegException("Couldn't copy codec context");
 	    if(avcodec_open2(Stream.CodecCtx, Codec, NULL) < 0)
-		throw TFFmpepException("Couldn't open codec");
+		throw TFFmpegException("Couldn't open codec");
 	    avcodec_close(CodecCtxTmp);
 
 	    Stream.Init();
@@ -238,7 +242,7 @@ public:
 
     void CheckStream(int stream) {
 	if(stream < 0 || stream >= (int) Streams.size()) {
-	    throw TFFmpepException("Stream not found");
+	    throw TFFmpegException("Stream not found");
 	}
     }
     
@@ -256,14 +260,14 @@ public:
 	    info.Width = Stream.CodecCtx->width;
 	    info.Height = Stream.CodecCtx->height;
 	} else {
-	    throw TFFmpepException("Wrong stream type");
+	    throw TFFmpegException("Wrong stream type");
 	}
 	
 	return info;
     }
 
     int Size(int stream) {
-	throw TFFmpepException("Not implemented");
+	throw TFFmpegException("Not implemented");
     }
     
     int Read(int stream, int sampNum, char** data) {
