@@ -1,47 +1,55 @@
 #pragma once
 
-#include <fstream>
-#include <list>
+#include <exception>
 
-struct AVFormatContext;
-struct AVOutputFormat;
-struct AVCodecContext;
-struct AVFrame;
-struct AVPacket;
-
-
-class TFFmpegAudioReader {
+class TFFmpepException {
+  const char *Msg;
 public:
-    TFFmpegAudioReader(const char *fname);
-    ~TFFmpegAudioReader();
+  TFFmpepException(const char *msg) {Msg = msg;}
+  const char *GetMessage() {return Msg;}
+};
 
-    int SampleRate();
-    int SampleWidth();
-    int Channels();
-    int Size();
+enum TFFmpegStreamType {
+  EFF_UNK_STREAM,
+  EFF_AUDIO_STREAM,
+  EFF_VIDEO_STREAM
+};
+
+struct TFFmpegStreamInfo {
+  TFFmpegStreamType Type;
+  int SampleRate;
+  int SampleSize;
+  //Audio only
+  int Channels;
+  //Video only
+  int Width;
+  int Height;
+};
+
+class TFFmpegReaderImp;
+class TFFmpegWriterImp;
+
+class TFFmpegReader {
+public:
+    TFFmpegReader(const char* fname);
+    ~TFFmpegReader();
+
+    int StreamNum();
+    TFFmpegStreamInfo StreamInfo(int stream);
+
+    int Size(int stream);
+    int Read(int stream, int sampNum, char** data);
     
-    int Read(char *buf, int maxlen);
-
     void Close();
 
 private:
-    int ReadPacket();
-    int ReadFrame();
-
-private:
-    AVFormatContext *avFormat;
-    AVCodecContext *avCodec;
-
-    AVPacket *packet;
-    size_t packet_offs;
-    AVFrame *frame;
-    size_t frame_offs;
+    TFFmpegReaderImp *Imp;
 };
 
-class TFFmpegAudioWriter {
+/*class TFFmpegWriter {
 public:
-    TFFmpegAudioWriter(const char *fname, int sampleRate=16000, int sampleWidth=2, int channels=1);
-    ~TFFmpegAudioWriter();
+    TFFmpegWriter(const char *fname, int sampleRate=16000, int sampleWidth=2, int channels=1);
+    ~TFFmpegWriter();
 
     int Write(char *buf, size_t len);
 
@@ -65,4 +73,4 @@ private:
 
     AVPacket *packet;
     AVFrame *frame;
-};
+    };*/

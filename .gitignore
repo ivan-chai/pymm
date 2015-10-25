@@ -2,6 +2,9 @@
 __pycache__/
 *.py[cod]
 
+# SWIG
+pymm_wrap.cpp
+
 # C extensions
 *.so
 

@@ -11,9 +11,10 @@ from distutils.core import setup, Extension
 os.environ['CC'] = 'g++'
 
 ffmpeg_wrapper = Extension('_pymm',
-                    libraries = [ 'avformat', 'avcodec', 'avutil' ],
+                    libraries = [ 'avformat', 'avcodec', 'avutil', 'swscale' ], #?swresample
                     sources = [ 'pymm.i', 'pymm.cpp' ],
-                    swig_opts=['-c++']
+                    swig_opts=['-c++', '-python', '-py3'],
+                    extra_compile_args=['-std=c++11']
                     )
 
 def make_binds():
