@@ -124,7 +124,7 @@ private:
 	    while(toRead > 0) {
 		if (FrameSize > 0) {
 		    //Append decoded data
-		    ToCopy = FFMIN(FrameSize - FrameOffs, toRead);
+		    ToCopy = FFMIN(FrameSize, toRead);
 		    if(Type == EFF_AUDIO_STREAM) {
 			for(int i = 0; i < CodecCtx->channels; ++i) {
 			    memcpy(data + SampleSize * (i * sampNum + sampNum - toRead),
@@ -145,6 +145,8 @@ private:
 			BytesN = DecodeMethod(CodecCtx, Frame, &GotFrame, Packet);
 			if(BytesN < 0)
 			    throw TFFmpepException("Decoding error");
+			Packet->data += BytesN;
+			Packet->size -= BytesN;
 		    } while(GotFrame == 0 && Packet->size > 0);
 		    if(GotFrame) {
 			FrameOffs = 0;
@@ -289,7 +291,10 @@ public:
 		Streams[Packet->stream_index].Cache.push_back(*Packet);
 	    }
 	}
-	return sampNum - ToRead;
+	int TotalBytes = Stream.SampleSize * (sampNum - ToRead);
+	if(Stream.Type == EFF_AUDIO_STREAM)
+	    TotalBytes *= Stream.CodecCtx->channels;
+	return TotalBytes;
     }
     
     int Size() {
