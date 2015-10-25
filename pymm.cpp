@@ -124,7 +124,7 @@ private:
 	    while(toRead > 0) {
 		if (FrameSize > 0) {
 		    //Append decoded data
-		    ToCopy = FFMIN(FrameSize, toRead);
+		    ToCopy = FFMIN(FrameSize - FrameOffs, toRead);
 		    if(Type == EFF_AUDIO_STREAM) {
 			for(int i = 0; i < CodecCtx->channels; ++i) {
 			    memcpy(data + SampleSize * (i * sampNum + sampNum - toRead),
@@ -139,7 +139,7 @@ private:
 		    toRead -= ToCopy;
 		    FrameSize -= ToCopy;
 		    FrameOffs += ToCopy;
-		} else if (Packet->size > 0) {
+		} else if (Packet && Packet->size > 0) {
 		    //Decode new portion
 		    do {
 			BytesN = DecodeMethod(CodecCtx, Frame, &GotFrame, Packet);
@@ -156,7 +156,7 @@ private:
 		    if (Packet->size == 0) {
 			av_free_packet(Packet);
 			Cache.pop_front();
-			Packet->size = 0;
+			Packet = NULL;
 		    }
 		} else if(Cache.size()) {
 		    //Get new packet
@@ -166,7 +166,7 @@ private:
 		    break;
 		}
 	    }
-	    return toRead - ToReadOrig;
+	    return ToReadOrig - toRead;
 	}
     };
     
@@ -211,7 +211,7 @@ public:
 	    Stream.Init();
 	}
 
-	Packet = new AVPacket;
+	Packet = new AVPacket();
 	av_init_packet(Packet);
     }
 
@@ -222,7 +222,6 @@ public:
     void Close() {
 	Streams.clear();
 	if (Packet != NULL) {
-	    av_free_packet(Packet);
 	    delete Packet;
 	}
 	if (FormatCtx) {
@@ -280,77 +279,19 @@ public:
 	    } else {
 		if(av_read_frame(FormatCtx, Packet) < 0)
 		    break;
-		AVPacket tmp = *Packet;
-		av_dup_packet(Packet);
-		av_free_packet(&tmp);
+		if(Packet->buf == NULL) {
+		    // Make copy for longer lifetime
+		    AVPacket Dup;
+		    av_copy_packet(&Dup, Packet);
+		    av_free_packet(Packet);
+		    *Packet = Dup;
+		}
 		Streams[Packet->stream_index].Cache.push_back(*Packet);
 	    }
 	}
 	return sampNum - ToRead;
-	/*
-	int w = SampleWidth();
-
-	size_t to_read = maxdata;
-	while (to_read > 0) {
-	    size_t to_copy;
-	    size_t line_size = frame->nb_samples * w;
-	    if (line_size - frame_offs >= to_read) {
-		to_copy = to_read;
-	    } else {
-		to_copy = line_size - frame_offs;
-	    }
-	    if (to_copy > 0) {
-		std::memcpy(buf + maxdata - to_read, frame->extended_data[0] + frame_offs, to_copy);
-		frame_offs += to_copy;
-	    }
-	    to_read -= to_copy;
-	    if (frame_offs >= line_size) {
-		if (ReadFrame() < 0)
-		    break;
-	    }
-	}
-	return maxdata - to_read;*/
     }
-
-    /*int ReadPacket() {
-	if (Packet == NULL)
-	    return -1;
-
-	av_free_packet(Packet);
-	if (av_read_frame(avFormat, Packet) < 0) {
-	    packet->size = 0;
-	    packet_offs = 0;
-	    return -1;
-	}
-	packet_offs = 0;
-	return 0;
-    }
-
-    int ReadFrame() {
-	if (frame == NULL)
-	    return -1;
-
-	int got_frame = 0;
-	frame_offs = 0;
-	while (got_frame == 0) {
-	    if (packet->size - packet_offs == 0) {
-		if (ReadPacket() < 0) {
-		    frame->nb_samples = 0;
-		    return -1;
-		}
-	    }
-	    AVPacket decPacket = *packet;
-	    decPacket.data += packet_offs;
-	    decPacket.size -= packet_offs;
-	    int decoded = avcodec_decode_audio4(avCodec, frame, &got_frame, &decPacket);
-	    decoded = FFMIN(decoded, packet->size);
-	    if (decoded < 0)
-		break;
-	    packet_offs += decoded;
-	}
-	return 0;
-    }
-    */
+    
     int Size() {
 	//Not implemented
 	return 0;
