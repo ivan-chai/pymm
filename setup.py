@@ -13,7 +13,7 @@ os.environ['CC'] = 'g++'
 ffmpeg_wrapper = Extension('_pymm',
                     libraries = [ 'avformat', 'avcodec', 'avutil', 'swscale' ], #?swresample
                     sources = [ 'pymm.i', 'pymm.cpp' ],
-                    swig_opts=['-c++', '-python', '-py3'],
+                    swig_opts=['-c++'],
                     extra_compile_args=['-std=c++11']
                     )
 
