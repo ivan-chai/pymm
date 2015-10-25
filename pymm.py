@@ -99,48 +99,6 @@ EFF_AUDIO_STREAM = _pymm.EFF_AUDIO_STREAM
 
 _pymm.EFF_VIDEO_STREAM_swigconstant(_pymm)
 EFF_VIDEO_STREAM = _pymm.EFF_VIDEO_STREAM
-class TFFmpegStreamInfo(_object):
-    __swig_setmethods__ = {}
-    __setattr__ = lambda self, name, value: _swig_setattr(self, TFFmpegStreamInfo, name, value)
-    __swig_getmethods__ = {}
-    __getattr__ = lambda self, name: _swig_getattr(self, TFFmpegStreamInfo, name)
-    __repr__ = _swig_repr
-    __swig_setmethods__["Type"] = _pymm.TFFmpegStreamInfo_Type_set
-    __swig_getmethods__["Type"] = _pymm.TFFmpegStreamInfo_Type_get
-    if _newclass:
-        Type = _swig_property(_pymm.TFFmpegStreamInfo_Type_get, _pymm.TFFmpegStreamInfo_Type_set)
-    __swig_setmethods__["SampleRate"] = _pymm.TFFmpegStreamInfo_SampleRate_set
-    __swig_getmethods__["SampleRate"] = _pymm.TFFmpegStreamInfo_SampleRate_get
-    if _newclass:
-        SampleRate = _swig_property(_pymm.TFFmpegStreamInfo_SampleRate_get, _pymm.TFFmpegStreamInfo_SampleRate_set)
-    __swig_setmethods__["SampleSize"] = _pymm.TFFmpegStreamInfo_SampleSize_set
-    __swig_getmethods__["SampleSize"] = _pymm.TFFmpegStreamInfo_SampleSize_get
-    if _newclass:
-        SampleSize = _swig_property(_pymm.TFFmpegStreamInfo_SampleSize_get, _pymm.TFFmpegStreamInfo_SampleSize_set)
-    __swig_setmethods__["Channels"] = _pymm.TFFmpegStreamInfo_Channels_set
-    __swig_getmethods__["Channels"] = _pymm.TFFmpegStreamInfo_Channels_get
-    if _newclass:
-        Channels = _swig_property(_pymm.TFFmpegStreamInfo_Channels_get, _pymm.TFFmpegStreamInfo_Channels_set)
-    __swig_setmethods__["Width"] = _pymm.TFFmpegStreamInfo_Width_set
-    __swig_getmethods__["Width"] = _pymm.TFFmpegStreamInfo_Width_get
-    if _newclass:
-        Width = _swig_property(_pymm.TFFmpegStreamInfo_Width_get, _pymm.TFFmpegStreamInfo_Width_set)
-    __swig_setmethods__["Height"] = _pymm.TFFmpegStreamInfo_Height_set
-    __swig_getmethods__["Height"] = _pymm.TFFmpegStreamInfo_Height_get
-    if _newclass:
-        Height = _swig_property(_pymm.TFFmpegStreamInfo_Height_get, _pymm.TFFmpegStreamInfo_Height_set)
-
-    def __init__(self):
-        this = _pymm.new_TFFmpegStreamInfo()
-        try:
-            self.this.append(this)
-        except:
-            self.this = this
-    __swig_destroy__ = _pymm.delete_TFFmpegStreamInfo
-    __del__ = lambda self: None
-TFFmpegStreamInfo_swigregister = _pymm.TFFmpegStreamInfo_swigregister
-TFFmpegStreamInfo_swigregister(TFFmpegStreamInfo)
-
 class TFFmpegReader(_object):
     __swig_setmethods__ = {}
     __setattr__ = lambda self, name, value: _swig_setattr(self, TFFmpegReader, name, value)

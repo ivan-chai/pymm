@@ -15,8 +15,14 @@ enum TFFmpegStreamType {
   EFF_VIDEO_STREAM
 };
 
+struct TFFmpegSampleType {
+  bool Int;
+  bool Signed;
+};
+
 struct TFFmpegStreamInfo {
   TFFmpegStreamType Type;
+  TFFmpegSampleType SampleType;
   int SampleRate;
   int SampleSize;
   //Audio only
@@ -38,7 +44,7 @@ public:
     TFFmpegStreamInfo StreamInfo(int stream);
 
     int Size(int stream);
-    int Read(int stream, int sampNum, char** data);
+    int Read(int stream, int sampNum, char*** data, int* channels);
     
     void Close();
 

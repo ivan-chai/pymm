@@ -33,6 +33,9 @@ private:
 	int FrameSize;
 	int FrameOffs;
 
+	//Audio only
+	TFFmpegSampleType SampleType;
+
 	//Video only
 	AVFrame* HelperFrame;
 	uint8_t* HelperVideoBuf;
@@ -75,18 +78,37 @@ private:
 	    switch (CodecCtx->sample_fmt) {
 	    case AV_SAMPLE_FMT_U8:
 	    case AV_SAMPLE_FMT_U8P:
+		SampleType.Int = true;
+		SampleType.Signed = false;
 		SampleSize = 1;
 		break;
 	    case AV_SAMPLE_FMT_S16:
 	    case AV_SAMPLE_FMT_S16P:
+		SampleType.Int = true;
+		SampleType.Signed = true;
 		SampleSize = 2;
 		break;
 	    case AV_SAMPLE_FMT_S32:
 	    case AV_SAMPLE_FMT_S32P:
+		SampleType.Int = true;
+		SampleType.Signed = true;
 		SampleSize = 4;
+		break;
+	    case AV_SAMPLE_FMT_FLT:
+	    case AV_SAMPLE_FMT_FLTP:
+		SampleType.Int = false;
+		SampleType.Signed = true;
+		SampleSize = sizeof(float);
+		break;
+	    case AV_SAMPLE_FMT_DBL:
+	    case AV_SAMPLE_FMT_DBLP:
+		SampleType.Int = false;
+		SampleType.Signed = true;
+		SampleSize = sizeof(double);
 		break;
 	    default:
 		throw TFFmpegException("Could not detect sample size");
+		
 	    }
 	}
 	void InitVideo() {
@@ -111,7 +133,7 @@ private:
 				    NULL
 		);
 	}
-	int Read(int toRead, char* data, int sampNum) {
+	int Read(int toRead, char** data, int sampNum) {
 	    int (*DecodeMethod) (AVCodecContext *, AVFrame *, int *, const AVPacket *);
 	    if(Type == EFF_AUDIO_STREAM)
 		DecodeMethod = &avcodec_decode_audio4;
@@ -130,12 +152,12 @@ private:
 		    ToCopy = FFMIN(FrameSize, toRead);
 		    if(Type == EFF_AUDIO_STREAM) {
 			for(int i = 0; i < CodecCtx->channels; ++i) {
-			    memcpy(data + SampleSize * (i * sampNum + sampNum - toRead),
+			    memcpy(data[i] + SampleSize * (sampNum - toRead),
 				   Frame->data[i] + SampleSize * FrameOffs,
 				   SampleSize * ToCopy);
 			}
 		    } else if(Type == EFF_VIDEO_STREAM) {
-			memcpy(data + SampleSize * (sampNum - toRead),
+			memcpy(data[0] + SampleSize * (sampNum - toRead),
 			       Frame->data[0] + SampleSize * FrameOffs,
 			       SampleSize * ToCopy);
 		    }
@@ -252,6 +274,7 @@ public:
 	TFFmpegStreamInfo info;
 	TFFmpegStream& Stream = Streams[stream];
 	info.Type = Stream.Type;
+	info.SampleType = Stream.SampleType;
 	info.SampleRate = Stream.CodecCtx->sample_rate;
 	info.SampleSize = Stream.SampleSize;
 	if(Stream.Type == EFF_AUDIO_STREAM) {
@@ -270,13 +293,16 @@ public:
 	throw TFFmpegException("Not implemented");
     }
     
-    int Read(int stream, int sampNum, char** data) {
+    int Read(int stream, int sampNum, char*** data, int* channels) {
 	CheckStream(stream);
 	TFFmpegStream& Stream = Streams[stream];
-	int BufSize = Stream.SampleSize * sampNum;
+	*channels = 1;
 	if(Stream.Type == EFF_AUDIO_STREAM)
-	    BufSize *= Stream.CodecCtx->channels;
-	*data = new char[BufSize];
+	    *channels = Stream.CodecCtx->channels;
+	int BufSize = Stream.SampleSize * sampNum;
+	*data = new char*[*channels];
+	for(int i = 0; i < *channels; ++i)
+	    (*data)[i] = new char[BufSize];
 
 	int ToRead = sampNum;
 	while(ToRead > 0) {
@@ -295,10 +321,8 @@ public:
 		Streams[Packet->stream_index].Cache.push_back(*Packet);
 	    }
 	}
-	int TotalBytes = Stream.SampleSize * (sampNum - ToRead);
-	if(Stream.Type == EFF_AUDIO_STREAM)
-	    TotalBytes *= Stream.CodecCtx->channels;
-	return TotalBytes;
+	int PerChannelBytes = Stream.SampleSize * (sampNum - ToRead);
+	return PerChannelBytes;
     }
     
     int Size() {
@@ -327,8 +351,8 @@ int TFFmpegReader::Size(int stream) {
   return Imp->Size(stream);
 }
 
-int TFFmpegReader::Read(int stream, int sampNum, char** data) {
-    return Imp->Read(stream, sampNum, data);
+int TFFmpegReader::Read(int stream, int sampNum, char*** data, int* channels) {
+    return Imp->Read(stream, sampNum, data, channels);
 }
 
 void TFFmpegReader::Close() {

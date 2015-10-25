@@ -11,17 +11,6 @@ enum TFFmpegStreamType {
   EFF_VIDEO_STREAM
 };
    
-struct TFFmpegStreamInfo {
-  TFFmpegStreamType Type;
-  int SampleRate;
-  int SampleSize;
-  //Audio only
-  int Channels;
-  //Video only
-  int Width;
-  int Height;
-};
-
 %exception {
   try {
     $action
@@ -32,12 +21,16 @@ struct TFFmpegStreamInfo {
 }
 
 // char** data
-%typemap(in, numinputs=0) char **data (char *tmpptr) {
+%typemap(in, numinputs=0) (char ***data, int* channels) (char **tmpptr, int tmpchans) {
   $1 = &tmpptr;
+  $2 = &tmpchans;
 }
-%typemap(argout) char** data {
+%typemap(argout) (char*** data, int* channels) {
   Py_XDECREF($result);
-  $result = PyByteArray_FromStringAndSize(*$1, result);
+  $result = PyTuple_New(*$2);
+  for(int i = 0; i < *$2; ++i)
+      PyTuple_SetItem($result, i, PyByteArray_FromStringAndSize((*$1)[i], result));
+  delete[] *$1;
 }
 
 // stream info
@@ -47,10 +40,19 @@ struct TFFmpegStreamInfo {
   PyDict_SetItemString($result, "sample_rate", PyLong_FromLong($1.SampleRate));
   PyDict_SetItemString($result, "sample_size", PyLong_FromLong($1.SampleSize));
   if($1.Type == EFF_AUDIO_STREAM) {
-    PyDict_SetItemString($result, "channels", PyLong_FromLong($1.Channels));
+      PyDict_SetItemString($result, "channels", PyLong_FromLong($1.Channels));
+      char stype;
+      if($1.SampleType.Int) {
+	  if($1.SampleType.Signed)
+	      stype = 's';
+	  else
+	      stype = 'u';
+      } else
+	  stype = 'f';
+      PyDict_SetItemString($result, "sample_type", PyUnicode_FromStringAndSize(&stype, 1));
   } else if($1.Type == EFF_VIDEO_STREAM) {
-    PyDict_SetItemString($result, "width", PyLong_FromLong($1.Width));
-    PyDict_SetItemString($result, "height", PyLong_FromLong($1.Height));
+      PyDict_SetItemString($result, "width", PyLong_FromLong($1.Width));
+      PyDict_SetItemString($result, "height", PyLong_FromLong($1.Height));
   }
 }
 
@@ -60,7 +62,7 @@ public:
     ~TFFmpegReader();
 
     %rename(read) Read;
-    int Read(int stream, int sampNum, char** data);
+    int Read(int stream, int sampNum, char*** data, int* channels);
     
     %rename(close) Close;
     void Close();
