@@ -41,6 +41,10 @@ private:
 	uint8_t* HelperVideoBuf;
 	SwsContext *SwsCtx;
 
+	//Debug
+	int PacketNum;
+	int FrameNum;
+
 	// METHODS
 	TFFmpegStream() {
 	    CodecCtx = NULL;
@@ -49,6 +53,8 @@ private:
 	    HelperFrame = NULL;
 	    HelperVideoBuf = NULL;
 	    SwsCtx = NULL;
+	    PacketNum = 0;
+	    FrameNum = 0;
 	}
 	~TFFmpegStream() {
 	    avcodec_close(CodecCtx);
@@ -164,29 +170,32 @@ private:
 		    toRead -= ToCopy;
 		    FrameSize -= ToCopy;
 		    FrameOffs += ToCopy;
-		} else if (Packet && Packet->size > 0) {
+		} else if (Packet) {
 		    //Decode new portion
 		    do {
 			BytesN = DecodeMethod(CodecCtx, Frame, &GotFrame, Packet);
 			if(BytesN < 0)
 			    throw TFFmpegException("Decoding error");
-			Packet->data += BytesN;
-			Packet->size -= BytesN;
-		    } while(GotFrame == 0 && Packet->size > 0);
+			if(Packet->size) {
+			    Packet->data += BytesN;
+			    Packet->size -= BytesN;
+			}
+		    } while(GotFrame == 0 && BytesN > 0);
 		    if(GotFrame) {
+			FrameNum ++;
 			FrameOffs = 0;
 			if(Type == EFF_AUDIO_STREAM)
 			    FrameSize = Frame->nb_samples;
 			else if(Type == EFF_VIDEO_STREAM)
 			    FrameSize = 1;
-		    }
-		    if (Packet->size == 0) {
+		    } else if (Packet->size == 0) {
 			av_free_packet(Packet);
 			Cache.pop_front();
 			Packet = NULL;
 		    }
 		} else if(Cache.size()) {
 		    //Get new packet
+		    PacketNum ++;
 		    Packet = &(*Cache.begin());
 		} else {
 		    //No data left
