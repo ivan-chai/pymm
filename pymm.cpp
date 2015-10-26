@@ -37,8 +37,8 @@ private:
 	TFFmpegSampleType SampleType;
 
 	//Video only
-	AVFrame* HelperFrame;
-	uint8_t* HelperVideoBuf;
+	AVFrame* FrameRGB;
+	uint8_t* BufferRGB;
 	SwsContext *SwsCtx;
 
 	//Debug
@@ -50,8 +50,8 @@ private:
 	    CodecCtx = NULL;
 	    Frame = NULL;
 	    Packet = NULL;
-	    HelperFrame = NULL;
-	    HelperVideoBuf = NULL;
+	    FrameRGB = NULL;
+	    BufferRGB = NULL;
 	    SwsCtx = NULL;
 	    PacketNum = 0;
 	    FrameNum = 0;
@@ -62,10 +62,10 @@ private:
 		av_free(Frame);
 	    for(auto i = Cache.begin(); i != Cache.end(); i++)
 		av_free_packet(&(*i));
-	    if(HelperVideoBuf)
-		delete HelperVideoBuf;
-	    if(HelperFrame) 
-		av_free(HelperFrame);
+	    if(BufferRGB)
+		delete BufferRGB;
+	    if(FrameRGB) 
+		av_free(FrameRGB);
 	    if(SwsCtx) 
 		av_free(SwsCtx);
 	}
@@ -118,13 +118,13 @@ private:
 	    }
 	}
 	void InitVideo() {
-	    SampleSize = avpicture_get_size(CodecCtx->pix_fmt, CodecCtx->width, CodecCtx->height);
-	    int HelperBufSize = avpicture_get_size(PIX_FMT_RGB24, CodecCtx->width, CodecCtx->height);
-	    HelperFrame = av_frame_alloc();
-	    if(HelperFrame == NULL)
+	    SampleSize = avpicture_get_size(PIX_FMT_RGB24, CodecCtx->width, CodecCtx->height);
+	    int HelperBufSize = SampleSize;
+	    FrameRGB = av_frame_alloc();
+	    if(FrameRGB == NULL)
 		throw TFFmpegException("Couldn't allocate frame");
-	    HelperVideoBuf = new uint8_t[HelperBufSize];
-	    avpicture_fill((AVPicture *)HelperFrame, HelperVideoBuf,
+	    BufferRGB = new uint8_t[HelperBufSize];
+	    avpicture_fill((AVPicture *)FrameRGB, BufferRGB,
 			   PIX_FMT_RGB24,
 			   CodecCtx->width, CodecCtx->height);
 	    SwsCtx = sws_getContext(CodecCtx->width,
@@ -164,7 +164,7 @@ private:
 			}
 		    } else if(Type == EFF_VIDEO_STREAM) {
 			memcpy(data[0] + SampleSize * (sampNum - toRead),
-			       Frame->data[0] + SampleSize * FrameOffs,
+			       FrameRGB->data[0] + SampleSize * FrameOffs,
 			       SampleSize * ToCopy);
 		    }
 		    toRead -= ToCopy;
@@ -186,8 +186,14 @@ private:
 			FrameOffs = 0;
 			if(Type == EFF_AUDIO_STREAM)
 			    FrameSize = Frame->nb_samples;
-			else if(Type == EFF_VIDEO_STREAM)
+			else if(Type == EFF_VIDEO_STREAM) {
 			    FrameSize = 1;
+			    //Convert to RGB
+			    sws_scale(SwsCtx, (uint8_t const * const *)Frame->data,
+				      Frame->linesize, 0, CodecCtx->height,
+				      FrameRGB->data, FrameRGB->linesize);
+			    av_frame_unref(Frame);
+			}
 		    } else if (Packet->size == 0) {
 			av_free_packet(Packet);
 			Cache.pop_front();
@@ -292,6 +298,7 @@ public:
 	    info.SampleRate = Stream.CodecCtx->time_base.den / ((float) Stream.CodecCtx->time_base.num * Stream.CodecCtx->ticks_per_frame);
 	    info.Width = Stream.CodecCtx->width;
 	    info.Height = Stream.CodecCtx->height;
+	    info.Ratio = Stream.CodecCtx->sample_aspect_ratio.num / (float) Stream.CodecCtx->sample_aspect_ratio.den;
 	} else {
 	    throw TFFmpegException("Wrong stream type");
 	}

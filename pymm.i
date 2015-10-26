@@ -53,6 +53,7 @@ enum TFFmpegStreamType {
   } else if($1.Type == EFF_VIDEO_STREAM) {
       PyDict_SetItemString($result, "width", PyLong_FromLong($1.Width));
       PyDict_SetItemString($result, "height", PyLong_FromLong($1.Height));
+      PyDict_SetItemString($result, "aspect", PyFloat_FromDouble($1.Ratio));
   }
 }
 

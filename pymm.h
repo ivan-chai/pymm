@@ -3,33 +3,34 @@
 #include <exception>
 
 class TFFmpegException {
-  const char *Msg;
+    const char *Msg;
 public:
-  TFFmpegException(const char *msg) {Msg = msg;}
-  const char *GetMessage() {return Msg;}
+    TFFmpegException(const char *msg) {Msg = msg;}
+    const char *GetMessage() {return Msg;}
 };
 
 enum TFFmpegStreamType {
-  EFF_UNK_STREAM,
-  EFF_AUDIO_STREAM,
-  EFF_VIDEO_STREAM
+    EFF_UNK_STREAM,
+    EFF_AUDIO_STREAM,
+    EFF_VIDEO_STREAM
 };
 
 struct TFFmpegSampleType {
-  bool Int;
-  bool Signed;
+    bool Int;
+    bool Signed;
 };
 
 struct TFFmpegStreamInfo {
-  TFFmpegStreamType Type;
-  TFFmpegSampleType SampleType;
-  float SampleRate;
-  int SampleSize;
-  //Audio only
-  int Channels;
-  //Video only
-  int Width;
-  int Height;
+    TFFmpegStreamType Type;
+    TFFmpegSampleType SampleType;
+    float SampleRate;
+    int SampleSize;
+    //Audio only
+    int Channels;
+    //Video only
+    int Width;
+    int Height;
+    float Ratio;
 };
 
 class TFFmpegReaderImp;
