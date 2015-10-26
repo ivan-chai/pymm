@@ -37,7 +37,7 @@ enum TFFmpegStreamType {
 %typemap(out) TFFmpegStreamInfo {
   $result = PyDict_New();
   PyDict_SetItemString($result, "type", PyLong_FromLong($1.Type));
-  PyDict_SetItemString($result, "sample_rate", PyLong_FromLong($1.SampleRate));
+  PyDict_SetItemString($result, "sample_rate", PyFloat_FromDouble($1.SampleRate));
   PyDict_SetItemString($result, "sample_size", PyLong_FromLong($1.SampleSize));
   if($1.Type == EFF_AUDIO_STREAM) {
       PyDict_SetItemString($result, "channels", PyLong_FromLong($1.Channels));

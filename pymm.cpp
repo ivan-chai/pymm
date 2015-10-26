@@ -275,11 +275,12 @@ public:
 	TFFmpegStream& Stream = Streams[stream];
 	info.Type = Stream.Type;
 	info.SampleType = Stream.SampleType;
-	info.SampleRate = Stream.CodecCtx->sample_rate;
 	info.SampleSize = Stream.SampleSize;
 	if(Stream.Type == EFF_AUDIO_STREAM) {
+	    info.SampleRate = Stream.CodecCtx->sample_rate;
 	    info.Channels = Stream.CodecCtx->channels;
 	} else if(Stream.Type == EFF_VIDEO_STREAM) {
+	    info.SampleRate = Stream.CodecCtx->time_base.den / ((float) Stream.CodecCtx->time_base.num * Stream.CodecCtx->ticks_per_frame);
 	    info.Width = Stream.CodecCtx->width;
 	    info.Height = Stream.CodecCtx->height;
 	} else {

@@ -23,7 +23,7 @@ struct TFFmpegSampleType {
 struct TFFmpegStreamInfo {
   TFFmpegStreamType Type;
   TFFmpegSampleType SampleType;
-  int SampleRate;
+  float SampleRate;
   int SampleSize;
   //Audio only
   int Channels;
