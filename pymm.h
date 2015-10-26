@@ -30,7 +30,7 @@ struct TFFmpegStreamInfo {
     //Video only
     int Width;
     int Height;
-    float Ratio;
+    float Aspect;
 };
 
 class TFFmpegReaderImp;

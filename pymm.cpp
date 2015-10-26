@@ -298,7 +298,7 @@ public:
 	    info.SampleRate = Stream.CodecCtx->time_base.den / ((float) Stream.CodecCtx->time_base.num * Stream.CodecCtx->ticks_per_frame);
 	    info.Width = Stream.CodecCtx->width;
 	    info.Height = Stream.CodecCtx->height;
-	    info.Ratio = Stream.CodecCtx->sample_aspect_ratio.num / (float) Stream.CodecCtx->sample_aspect_ratio.den;
+	    info.Aspect = Stream.CodecCtx->sample_aspect_ratio.num / (float) Stream.CodecCtx->sample_aspect_ratio.den;
 	} else {
 	    throw TFFmpegException("Wrong stream type");
 	}
