@@ -4,6 +4,7 @@ __pycache__/
 
 # SWIG
 pymm_wrap.cpp
+pymm.py
 
 # C extensions
 *.so
