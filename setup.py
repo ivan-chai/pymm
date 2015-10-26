@@ -11,7 +11,7 @@ from distutils.core import setup, Extension
 os.environ['CC'] = 'g++'
 
 ffmpeg_wrapper = Extension('_pymm',
-                    libraries = [ 'avformat', 'avcodec', 'avutil', 'swscale' ], #?swresample
+                    libraries = [ 'avformat', 'avcodec', 'avutil', 'avdevice', 'swscale' ], #?swresample
                     sources = [ 'pymm.i', 'pymm.cpp' ],
                     swig_opts=['-c++'],
                     extra_compile_args=['-std=c++11']

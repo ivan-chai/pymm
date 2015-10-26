@@ -7,6 +7,7 @@
 extern "C" {
 #include <libavformat/avformat.h>
 #include <libavcodec/avcodec.h>
+#include <libavdevice/avdevice.h>
 #include <libavutil/avutil.h>
 #include <libswscale/swscale.h>
 }
@@ -223,6 +224,8 @@ public:
 	
 	av_log_set_level(AV_LOG_QUIET);
 	av_register_all();
+	avdevice_register_all();
+	
 	if(avformat_open_input(&FormatCtx, fname, NULL, NULL) != 0)
 	    throw TFFmpegException("Couldn't open file");
 	if(avformat_find_stream_info(FormatCtx, NULL) < 0)
@@ -291,14 +294,18 @@ public:
 	info.Type = Stream.Type;
 	info.SampleType = Stream.SampleType;
 	info.SampleSize = Stream.SampleSize;
+	AVCodecContext *Ctx = Stream.CodecCtx;
 	if(Stream.Type == EFF_AUDIO_STREAM) {
-	    info.SampleRate = Stream.CodecCtx->sample_rate;
-	    info.Channels = Stream.CodecCtx->channels;
+	    info.SampleRate = Ctx->sample_rate;
+	    info.Channels = Ctx->channels;
 	} else if(Stream.Type == EFF_VIDEO_STREAM) {
-	    info.SampleRate = Stream.CodecCtx->time_base.den / ((float) Stream.CodecCtx->time_base.num * Stream.CodecCtx->ticks_per_frame);
-	    info.Width = Stream.CodecCtx->width;
-	    info.Height = Stream.CodecCtx->height;
-	    info.Aspect = Stream.CodecCtx->sample_aspect_ratio.num / (float) Stream.CodecCtx->sample_aspect_ratio.den;
+	    info.SampleRate = Ctx->time_base.den / ((float) Ctx->time_base.num * Ctx->ticks_per_frame);
+	    info.Width = Ctx->width;
+	    info.Height = Ctx->height;
+	    if(Ctx->sample_aspect_ratio.num)
+		info.Aspect = Ctx->sample_aspect_ratio.num / (float) Ctx->sample_aspect_ratio.den;
+	    else
+		info.Aspect = 1.0;
 	} else {
 	    throw TFFmpegException("Wrong stream type");
 	}
