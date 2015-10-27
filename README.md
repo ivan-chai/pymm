@@ -29,4 +29,4 @@ print(slen)  # Total number of samples
 
 For video reading example see examples/read_video.py
 
-You can also capture webcam by reading /dev/video0 (Linux)
+You can also capture webcam by reading /dev/video0 (Linux) and pass FFmpeg-like parameters such as {"video_size": "1280x800"}
