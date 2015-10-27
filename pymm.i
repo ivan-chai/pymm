@@ -20,7 +20,27 @@ enum TFFmpegStreamType {
   }
 }
 
-// char** data
+// params
+%typemap(typecheck,precedence=SWIG_TYPECHECK_POINTER) TParams* {
+    if($input == Py_None)
+	$1 = 1;
+    else
+	$1 = PyDict_Check($input) ? 1 : 0;
+}
+%typemap(in) TParams* params (TParams tmp) {
+    if ($input != Py_None) {
+	PyObject *key, *value;
+	Py_ssize_t pos = 0;
+	while (PyDict_Next($input, &pos, &key, &value)) {
+	    tmp[std::string(PyUnicode_AsUTF8(key), PyUnicode_GetSize(key))] =
+		std::string(PyUnicode_AsUTF8(value), PyUnicode_GetSize(value));
+	}
+	$1 = &tmp;
+    } else
+	$1 = NULL;
+}
+
+// multichannel output
 %typemap(in, numinputs=0) (char ***data, int* channels) (char **tmpptr, int tmpchans) {
   $1 = &tmpptr;
   $2 = &tmpchans;
@@ -59,7 +79,7 @@ enum TFFmpegStreamType {
 
 class TFFmpegReader {
 public:
-    TFFmpegReader(const char *fname);
+    TFFmpegReader(const char *fname, TParams* params=NULL);
     ~TFFmpegReader();
 
     %rename(read) Read;

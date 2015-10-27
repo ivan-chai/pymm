@@ -1,6 +1,7 @@
 #pragma once
 
-#include <exception>
+#include <string>
+#include <map>
 
 class TFFmpegException {
     const char *Msg;
@@ -33,12 +34,15 @@ struct TFFmpegStreamInfo {
     float Aspect;
 };
 
+class TFFmpegProbeImp;
 class TFFmpegReaderImp;
 class TFFmpegWriterImp;
 
+typedef std::map<std::string, std::string> TParams;
+
 class TFFmpegReader {
 public:
-    TFFmpegReader(const char* fname);
+    TFFmpegReader(const char* fname, TParams* params=NULL);
     ~TFFmpegReader();
 
     int StreamNum();

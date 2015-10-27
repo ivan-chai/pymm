@@ -16,7 +16,7 @@ extern "C" {
 
 //=================================================================
 //
-// TFFmpegAudioReader
+// TFFmpegReader
 //
 //=================================================================
 
@@ -218,15 +218,20 @@ private:
     AVPacket* Packet;
 
 public:
-    TFFmpegReaderImp(const char* fname) {
+    TFFmpegReaderImp(const char* fname, TParams* params) {
 	FormatCtx = NULL;
 	Packet = NULL;
 	
 	av_log_set_level(AV_LOG_QUIET);
 	av_register_all();
 	avdevice_register_all();
+
+	AVDictionary *av_options = NULL;
+	if(params)
+	    for(auto i = params->begin(); i != params->end(); ++i)
+		av_dict_set(&av_options, i->first.c_str(), i->second.c_str(), 0);
 	
-	if(avformat_open_input(&FormatCtx, fname, NULL, NULL) != 0)
+	if(avformat_open_input(&FormatCtx, fname, NULL, &av_options) != 0)
 	    throw TFFmpegException("Couldn't open file");
 	if(avformat_find_stream_info(FormatCtx, NULL) < 0)
 	    throw TFFmpegException("Stream info not found");
@@ -355,8 +360,8 @@ public:
     }
 };
 
-TFFmpegReader::TFFmpegReader(const char* fname) {
-  Imp = new TFFmpegReaderImp(fname);
+TFFmpegReader::TFFmpegReader(const char* fname, TParams* params) {
+    Imp = new TFFmpegReaderImp(fname, params);
 }
 
 TFFmpegReader::~TFFmpegReader() {
