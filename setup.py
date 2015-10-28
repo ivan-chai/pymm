@@ -1,34 +1,41 @@
-#!/usr/bin/env python3
+"""A setuptools based setup module.
 
-"""
-Distutils/setuptools installer for pymm.
+See:
+https://github.com/ivan-chai/pymm
 """
 
-import os
-import subprocess
 from distutils.core import setup, Extension
 
-os.environ['CC'] = 'g++'
-
 ffmpeg_wrapper = Extension('_pymm',
-                    libraries = [ 'avformat', 'avcodec', 'avutil', 'avdevice', 'swscale' ], #?swresample
-                    sources = [ 'pymm.i', 'pymm.cpp' ],
-                    swig_opts=['-c++'],
-                    extra_compile_args=['-std=c++11']
+                           libraries = [ 'avformat', 'avcodec', 'avutil', 'avdevice', 'swscale' ],
+                           sources = [ 'pymm.i', 'pymm.cpp' ],
+                           swig_opts=['-c++'],
+                           extra_compile_args=['-std=c++11']
                     )
 
-def make_binds():
-    subprocess.call('swig -python -py3 -c++ -o pymm_wrap.cpp pymm.i'.split())
-
-#make_binds()
-
 setup(name='pymm',
-      version='0.0.1',
-      license='GPLv3',
-      author='Ivan Karpukhin',
-      url='https://github.com/ivan-chai/pymm',
+      version='0.1.0a1',
       description='Audio and video I/O library',
       long_description='Simple Python3 wrapper for audio and video I/O using FFmpeg',
-#      packages=['pymm'],
-#      package_data={'pymm': ['_pymm.so', 'pymm.py', '__init__.py']},
+      url='https://github.com/ivan-chai/pymm',
+      author='Ivan Karpukhin',
+      author_email='karpuhini@yandex.ru',
+      license='GPLv3+',
+      classifiers=[
+          'Development Status :: 3 - Alpha',
+
+          'Intended Audience :: Developers',
+          'Topic :: Software Development :: Libraries :: Python Modules',
+
+          'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
+
+          'Programming Language :: Python :: 2',
+          'Programming Language :: Python :: 2.6',
+          'Programming Language :: Python :: 2.7',
+          'Programming Language :: Python :: 3',
+          'Programming Language :: Python :: 3.2',
+          'Programming Language :: Python :: 3.3',
+          'Programming Language :: Python :: 3.4'
+          ],
+      keywords='ffmpeg multimedia development',
       ext_modules = [ ffmpeg_wrapper ])
